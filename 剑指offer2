@@ -1,0 +1,1142 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.Globalization;
+using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace leetcode
+{
+    /*
+        剑指offer II
+     */
+    internal class Class1
+    {
+        /*
+         1、三数之和
+         */
+        public IList<IList<int>> ThreeSum(int[] nums)
+        {
+            IList<IList<int>> res = new List<IList<int>>();
+
+            Array.Sort(nums);
+
+            for (int i = 0; i < nums.Length - 2 && nums[i] <= 0; i++)
+            {
+                if (i > 0 && nums[i] == nums[i - 1]) continue;
+
+                int m = i + 1;
+                int n = nums.Length - 1;
+
+                while (m < n)
+                {
+                    if (nums[m] + nums[n] + nums[i] < 0)
+                    {
+                        m++;
+                        while (m < n && nums[m] == nums[m - 1])
+                        {
+                            m++;
+                        }
+                    }
+                    else if (nums[m] + nums[n] + nums[i] > 0)
+                    {
+                        n--;
+                        while (m < n && nums[n] == nums[n + 1])
+                        {
+                            n--;
+                        }
+                    }
+                    else
+                    {
+                        List<int> temp = new List<int>() { nums[i], nums[m], nums[n] };
+                        res.Add(temp);
+                        m++;
+                        n--;
+                        while (m < n && nums[m] == nums[m - 1])
+                        {
+                            m++;
+                        }
+                        while (m < n && nums[n] == nums[n + 1])
+                        {
+                            n--;
+                        }
+                    }
+                }
+
+            }
+
+            return res;
+        }
+
+
+        /*
+            2、和大于等于target的最小连续子数组
+         */
+
+        public int MinSubArrayLen(int target, int[] nums)
+        {
+            if (nums.Length == 0) return 0;
+
+            int left = 0;
+            int right = 0;
+
+            int temp_sum = 0;
+            List<int> temp = new List<int>();
+
+            int res = Int32.MaxValue;
+            while (right < nums.Length)
+            {
+                if (temp_sum < target)
+                {
+                    temp_sum += nums[right];
+                    temp.Add(nums[right]);
+                }
+
+                if (temp_sum >= target)
+                {
+                    res = Math.Min(res, temp.Count);
+                    while (temp_sum > target)
+                    {
+                        temp.RemoveAt(0);
+                        temp_sum -= nums[left++];
+                    }
+                    if (temp_sum == target)
+                    {
+                        res = Math.Min(res, temp.Count);
+                        temp.RemoveAt(0);
+                        temp_sum -= nums[left];
+                        left++;
+                    }
+                    else
+                    {
+                        res = Math.Min(res, temp.Count + 1);
+                    }
+
+                }
+                right++;
+
+            }
+            return res == Int32.MaxValue ? 0 : res;
+        }
+
+
+        /*
+          3、乘积小于 k 的子数组
+            滑动窗口
+        */
+        public int NumSubarrayProductLessThanK(int[] nums, int k)
+        {
+
+            int res = 0;
+            int prod = 1;
+
+            int i = 0;
+            for (int j = 0; j < nums.Length; j++)
+            {
+                prod *= nums[j];
+
+                while (i <= j && prod >= k)
+                {
+                    prod /= nums[i];
+                    i++;
+                }
+
+                res += j - i + 1;
+            }
+            return res;
+        }
+
+        /*
+            4、0和1个数相同的子数组       “具有相同个数 0 和 1的最长连续子数组”
+            哈希表   前缀和
+         */
+        public int findMaxLength(int[] nums)
+        {
+
+
+            int resLen = 0;
+
+            // 保存前缀后   key：数组下标  value：前缀和(其实就是1的个数）
+            Dictionary<int, int> map = new Dictionary<int, int>();
+
+            int sum = 0;
+            map.Add(0, -1);
+
+            for (int i = 0; i < nums.Length; i++)
+            {
+                int num = nums[i];
+                if (num == 1)
+                {
+                    sum++;
+                }
+                else
+                {
+                    sum--;
+                }
+                if (map.ContainsKey(sum))
+                {
+                    int prevIndex = map[sum];
+                    resLen = Math.Max(resLen, i - prevIndex);
+                }
+                else
+                {
+                    map.Add(sum, i);
+                }
+            }
+
+            return resLen;
+        }
+
+
+        /*
+            5、左右两边子数组的和相等
+            数组   前缀和
+         */
+        public int PivotIndex(int[] nums)
+        {
+
+            int sum = 0;
+            int sumAll = 0;
+            foreach (int item in nums)
+            {
+                sumAll += item;
+            }
+
+            for (int i = 0; i < nums.Length; i++)
+            {
+
+
+                if (sum == (sumAll - nums[i]) / 2.0)
+                {
+                    return i;
+                }
+                sum += nums[i];
+            }
+
+            return -1;
+        }
+
+        public bool ValidPalindrome(string s)
+        {
+
+            return ValidPalindrome_backTracking(s, 0, s.Length - 1, true);
+        }
+
+
+        public bool ValidPalindrome_backTracking(string s, int i, int j, bool flag)
+        {
+
+            while (i < j)
+            {
+                if (s[i] != s[j])
+                {
+                    if (!flag)
+                    {
+                        return false;  // 第二次修改还不是回文，则返回 false
+                    }
+
+                    return ValidPalindrome_backTracking(s, i, j - 1, false) || ValidPalindrome_backTracking(
+                        s, i + 1, j, false);
+                }
+
+                i++;
+                j--;
+            }
+
+            return true;
+        }
+
+        /**
+         *
+         * 6、反转链表     双指针做法和递归做法
+         */
+        public ListNode ReverseList(ListNode head)
+        {
+            if (head == null) return null;
+
+            ListNode pre = null;
+            ListNode cur = head;
+
+            while(cur.next != null)
+            {
+                ListNode temp = cur.next;
+                cur.next = pre;
+                pre = cur;
+                cur = temp;
+            }
+            cur.next = pre;
+
+            return cur;
+        }
+
+
+        /**
+         *
+         * 7、链表中的两数相加
+         */
+        public ListNode AddTwoNumbers(ListNode l1, ListNode l2)
+        {
+            if (l1 == null) return l2;
+            if (l2 == null) return l1;
+
+            ListNode l1_reverse = ReverseNode(l1);
+            ListNode l2_reverse = ReverseNode(l2);
+
+            ListNode temp1 = l1_reverse;
+            ListNode temp2 = l2_reverse;
+
+
+        
+            int diff = CountOfListNode(l1_reverse) - CountOfListNode(l2_reverse);
+
+            if (diff > 0)
+            {
+                int fa = 0;
+                ListNode pr = null;
+                while (temp2 != null)
+                {
+                    int tt = temp1.val + temp2.val + fa;
+                    temp1.val =  tt >= 10? tt - 10: tt;
+                    fa = tt >= 10?1:0;
+                    pr = temp1;
+                    temp1 = temp1.next; 
+                    temp2 = temp2.next; 
+                }
+                
+                while(temp1 != null)
+                {
+                    int tt = temp1.val + fa;
+                    temp1.val = tt >= 10 ? tt - 10 : tt;
+                    fa = tt >= 10 ? 1 : 0;
+                    pr = temp1;
+                    temp1 = temp1.next;
+                }
+
+                if (fa > 0)
+                {
+                    pr.next = new ListNode(fa);
+                }
+
+                return ReverseNode(l1_reverse);
+
+            }
+            else if(diff < 0)
+            {
+
+                int fa = 0;
+                ListNode pr = null;
+                while (temp1 != null)
+                {
+                    int tt = temp1.val + temp2.val + fa;
+                    temp2.val = tt >= 10? tt - 10: tt;
+                    fa = tt >= 10 ? 1 : 0;
+                    pr = temp2;
+                    temp1 = temp1.next; 
+                    temp2 = temp2.next;
+                }
+                while (temp2 != null)
+                {
+                    int tt = temp2.val + fa;
+                    temp2.val = tt >= 10 ? tt - 10 : tt;
+                    fa = tt >= 10 ? 1 : 0;
+                    pr = temp2;
+                    temp2 = temp2.next;
+                }
+
+                if (fa > 0)
+                {
+                    pr.next = new ListNode(fa);
+                }
+
+                return ReverseNode(l2_reverse);
+            }
+            else
+            {
+                int fa = 0;
+                ListNode pr = null;
+                while (temp2 != null)
+                {
+                    int tt = temp1.val + temp2.val + fa;
+                    temp1.val = tt >= 10 ? tt - 10 : tt;
+                    fa = tt >= 10 ? 1 : 0;
+
+                    pr = temp1;
+
+                    temp1 = temp1.next;
+                    temp2 = temp2.next;
+                }
+
+                if(fa > 0)
+                {
+                    pr.next = new ListNode(fa);
+                }
+
+
+                return ReverseNode(l1_reverse);
+            }
+
+        }
+
+        public ListNode ReverseNode(ListNode head)
+        {
+            if (head == null) return null;
+
+            ListNode pre = null;
+            ListNode cur = head;
+
+            while (cur.next != null)
+            {
+                ListNode temp = cur.next;
+                cur.next = pre;
+                pre = cur;
+                cur = temp;
+            }
+            cur.next = pre;
+
+            return cur;
+
+        }
+
+
+        public int CountOfListNode(ListNode head)
+        {
+            int count = 0;
+            ListNode te = head;
+            while(te != null)
+            {
+                count++;
+                te = te.next;
+            }
+            return count;
+
+        }
+
+        /**
+         *
+         * 8、重排链表
+         */
+        public void ReorderList(ListNode head)
+        {
+            if(head == null) return;
+
+
+            List<ListNode> list = new List<ListNode>();
+
+            ListNode temp = head;
+            while(temp != null)
+            {
+                list.Add(temp);
+                temp = temp.next;
+            }
+
+            int i = 0, j = list.Count - 1;
+
+            while(i < j)
+            {
+                list[i].next = list[j];
+                i++;
+                if(i == j)
+                {
+                    break;
+                }
+
+                list[j].next = list[i];
+                j--;
+            }
+            list[i].next = null;
+
+
+            while(head != null)
+            {
+                Console.WriteLine(head.val);
+                head = head.next;  
+            }
+
+        }
+
+
+        public bool IsPalindrome(ListNode head)
+        {
+            if(head.next== null) return true;
+            ListNode newHead = new ListNode(-1);
+
+            ListNode temp = head;
+            ListNode temp2 = newHead;
+            while(temp != null)
+            {
+                temp2.next = new ListNode(temp.val);
+                temp2 = temp2.next;
+                temp = temp.next;
+            }
+
+
+            ListNode reverse_head = ReverseNode(newHead.next);
+            return backTracking_IsPalindrome(head, reverse_head);
+        }
+
+
+        public bool backTracking_IsPalindrome(ListNode head, ListNode head_reverse)
+        {
+            
+            if(head == null) return true;
+
+            return head.val == head_reverse.val && backTracking_IsPalindrome(head.next, head_reverse.next);
+            
+        }
+
+
+        private Node preNode;
+        public Node Flatten(Node head)
+        {
+            backTracking_Flatten(head);
+            return head;
+        }
+
+        public void backTracking_Flatten(Node head)
+        {
+            if (head == null) return;
+
+            Node nextNode = head.next; // 保存右子树
+
+            if(preNode != null)
+            {
+                preNode.next = head;
+            }
+
+            head.prev = preNode;
+            preNode = head;
+            backTracking_Flatten(head.child);  // 相当于树的前序遍历   左子树
+            head.child = null;
+
+            backTracking_Flatten(nextNode); // 右子树
+            
+
+        }
+
+        // 以下为 动规题
+        // 1、
+        public int CountSubstrings(string s)
+        {
+            // 这道题和最长回文子串思路一样
+            if (s.Length == 1) return 1;
+
+            bool[,] isTree = new bool[s.Length+1, s.Length+1]; // dp 表示以 i 到 j 之间的字符串是否为回文串
+            int[] dp = new int[s.Length + 1]; // dp 表示以 j 结尾的字符串的回文子串个数
+                                          // 初始化
+            dp[0] = 0;
+            dp[1] = 1;
+
+            isTree[0, 0] = true;
+            isTree[0, 1] = true;
+
+
+            int Len = s.Length;
+
+            for (int i = 2; i <= Len; i++)
+            {
+                for (int start = 0; start < Len; start++)
+                {
+                    // 结尾
+                    int end = start + i - 1;
+
+                    if(end < s.Length)
+                    {
+                        if (s[start] == s[end])
+                        {
+                            
+                            if (isTree[start + 1, end - 1])
+                            {
+                                isTree[start, end] = true;
+                                dp[i] = dp[i - 1] + 1;
+                            }
+                            
+                        }
+                        else
+                        {
+                            isTree[start, end] = false;
+
+                        }
+
+                    }
+                    
+                }
+            }
+            return dp[s.Length];
+
+        }
+
+        // 2、
+        public int NumDecodings(string s)
+        {
+
+            int[] dp = new int[s.Length];
+            s = " " + s;
+
+            for (int i = 1; i < s.Length; i++)
+            {
+
+                int a = s[i] - '0';
+                int b = (s[i - 1] - '0') * 10 + (s[i] - '0');
+
+                if (1 <= a && a <= 9)
+                {
+                    dp[i] = dp[i - 1] + dp[i - 2];
+                }
+                if (10 <= b && b <= 26)
+                {
+                    dp[i] += dp[i - 2];
+                }
+
+
+            }
+            return dp[s.Length - 1];
+
+        }
+
+
+        /**
+         * 3、不同的二叉搜索树II
+         */
+        public IList<TreeNode> GenerateTrees(int n)
+        {
+            List<TreeNode> res = new List<TreeNode>();
+
+            return res;
+        }
+
+
+        /**
+         * 4、单词拆分
+         */
+        public bool WordBreak(string s, IList<string> wordDict)
+        {
+            int n = s.Length;
+            // 思路： dp[i] 表示 s 的前 i 位是否可以用 wordDict 表示
+            // 那么，如果 dp[i] == true  && dp[i:j] 也存在wordDict 里，则 dp[j] == true
+            bool[] dp = new bool[n+1];
+            dp[0] = true;
+
+            for (int i = 0; i < n; i++) // 开始索引
+            {
+                for (int j = i+1; j < n+1; j++)  // 结束索引
+                {
+                    if (dp[i] && wordDict.Contains(s.Substring(i, j - i)))
+                    {
+                        dp[j] = true;
+                    }
+                }
+
+            }
+
+            return dp[s.Length];
+        }
+
+
+
+        /**
+         * 5、最长递增子序列
+         */
+        public int LengthOfLIS(int[] nums)
+        {
+            if (nums.Length == 0)
+            {
+                return 0;
+            }
+
+
+            int[] dp = new int[nums.Length];  // 表示 以 i 结尾的最长递增子序列长度
+            int res = 0;
+            Array.Fill(dp, 1);
+
+            for (int i = 0; i < nums.Length; i++) // 以 i 结尾的序列
+            {
+                for (int j = 0; j < i; j++) // 以 j 开头的序列
+                {
+                    if (nums[j] < nums[i])
+                    {
+                        dp[i] = Math.Max(dp[i], dp[j] + 1); 
+                    }
+                }
+                res = Math.Max(res, dp[i]);
+
+            }
+            return res;
+        }
+
+
+
+        /**
+         * 6、最佳买卖股票时机含冷冻期
+         */
+        public int MaxProfit(int[] prices)
+        {
+            // 存在三种状态   持有状态 0  不持有状态且处于冷冻期 1   不持有状态且不处于冷冻期状态 2    因为卖出以后才会产生冷冻期，所以冷冻期只存在于不持有状态
+            if (prices.Length == 1) // 我们用 dp[i] 表示第 i 天结束之后的「累计最大收益」
+            {
+                return 0;
+            }
+
+            int[, ] dp = new int[prices.Length, 3];
+            
+
+            dp[0, 0] = -prices[0];
+            for (int i = 1; i < prices.Length; i++)
+            {
+                dp[i, 0] = Math.Max(dp[i - 1, 0], dp[i - 1, 2] - prices[i]);
+                dp[i, 1] = dp[i - 1, 0] + prices[i];
+                dp[i, 2] = Math.Max(dp[i - 1, 2], dp[i - 1, 1]);
+            }
+
+
+            return Math.Max(dp[prices.Length - 1, 1], dp[prices.Length - 1, 2]);
+        }
+
+        /**
+         * 7、超级丑数     这道题和丑数II思路一致
+         */
+        public int NthSuperUglyNumber(int n, int[] primes)
+        {
+            if(n == 1) { return 1; }
+
+            int count = primes.Length;
+
+            int[] dp = new int[n];
+            dp[0] = 1;
+
+            int[] pointers = new int[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                pointers[i] = 1;
+            }
+
+            int[] tt = new int[count];
+            for (int i = 1; i < n; i++)
+            {
+                int minValue = int.MaxValue;
+                for (int j = 0; j < count; j++)
+                {
+                    int value = dp[pointers[j] - 1] * primes[j];
+                    if (minValue > value)
+                    {
+                        minValue = value;
+                    }
+                    tt[j] = value;
+                }
+                dp[i] = minValue;
+
+                for (int k = 0; k < count; k++)
+                {
+                    if (tt[k] == dp[i])
+                    {
+                        pointers[k]++;
+                    }
+                }
+            }
+
+            return dp[n - 1];
+        }
+
+        /**
+         * 8、零钱兑换
+         */
+        public int coinChange(int[] coins, int amount)
+        {
+            if (coins.Length == 0)
+            {
+                return -1;
+            }
+
+            int [] dp = new int[amount + 1]; // dp 表示总额为 i 时所需的最小面值个数
+            dp[0] = 0;
+
+            for (int i = 1; i <= amount; i++) // 总额
+            {   
+                int min = int.MaxValue;
+                for (int j = 0; j < coins.Length; j++) // 面值
+                {
+                    if (coins[j] <= i && dp[i - coins[j]] < min)
+                    {
+                        min = dp[i - coins[j]] + 1;
+                    }
+                }
+                dp[i] = min;
+            }
+
+            return dp[amount] == int.MaxValue?-1:dp[amount];
+        }
+
+        // 以下为 贪心 算法
+        // 1、盛最多水的容器
+        // 方法一：双指针
+        public int MaxArea(int[] height)
+        {
+            // 思路就是只有向内移动短板，容量才会增多（短板决定容量大小）
+            int left = 0;
+            int right = height.Length - 1;
+
+            int res = 0;
+            while (left < right)
+            {
+                res = Math.Max(res, (right - left) * Math.Min(height[left], height[right]));
+                if (height[left] <= height[right])
+                {
+                    left++;
+                }
+                else
+                {
+                    right--;
+                }
+            }
+
+            return res;
+        }
+
+        // 2、加油站
+        public int CanCompleteCircuit(int[] gas, int[] cost)
+        {   
+            int n = gas.Length; // 长度
+            int sum = 0; // 累计剩余油量   
+            int minSum = 0; // 最低点
+            int start = 0; // 起点
+
+            for (int i = 0; i < n; i++)
+            {
+                sum += gas[i] - cost[i];
+                if (sum < minSum)
+                {
+                    minSum = sum;
+                    start = i + 1;
+                }
+
+            }
+            if (sum < 0)
+            {
+                return -1; 
+            }
+
+            return start == n?0:start;
+        }
+
+        // 3、最大数
+        public string LargestNumber(int[] nums)
+        {
+
+
+            string[] nums_string = new string[nums.Length];
+            for (int i = 0; i < nums.Length; i++)
+            {
+                nums_string[i] = nums[i] + "";
+            }
+
+            Array.Sort(nums_string, (a, b) => {
+
+                string ab = a + b;
+                string ba = b + a;
+
+                return ba.CompareTo(ab);
+      
+            });
+
+            Console.WriteLine(nums_string.ToString());
+
+            StringBuilder res = new StringBuilder();
+            foreach(string v in nums_string)
+            {
+                res.Append(v);
+            }
+
+            int k = 0;
+            while(k < res.Length - 1 && res[k] == '0')
+            {
+                k++;
+            }
+
+            return res.ToString(k, res.Length - k);
+
+        }
+        // 以下为 位运算
+        // 1、两数相除    不使用 乘法 除法 和取余
+        public int Divide(int dividend, int divisor)
+        {
+            return 0;
+        }
+
+
+        // 2、二进制求和
+        public string AddBinary(string a, string b)
+        {
+            Stack<int> stack1 = new Stack<int>();
+            Stack<int> stack2 = new Stack<int>();
+
+            for (int i = 0; i < a.Length; i++)
+            {
+                stack1.Push(a[i] - '0');
+            }
+
+            for (int j = 0; j < b.Length; j++)
+            {
+                stack2.Push(b[j] - '0');
+            }
+
+            StringBuilder res = new StringBuilder();
+            int flag = 0;
+            while (stack1.Count > 0 && stack2.Count > 0)
+            {   
+                int v1 = stack1.Pop();
+                int v2 = stack2.Pop();
+                
+                int value = v1 + v2 + flag;
+                if (value >= 2)
+                {
+                    value -= 2;
+                    res.Append(value);
+                    flag = 1;
+                }
+                else
+                {
+                    flag = 0;
+                    res.Append(value);
+                }
+            }
+            while (stack1.Count > 0)
+            {   
+                int value = stack1.Pop() + flag;
+
+                if (value >= 2)
+                {
+                    value -= 2;
+                    res.Append(value);
+                    flag = 1;
+                }
+                else
+                {
+                    flag = 0;
+                    res.Append(value);
+                }
+            }
+
+            while (stack2.Count > 0)
+            {
+                int value = stack2.Pop() + flag;
+
+                if (value >= 2)
+                {
+                    value -= 2;
+                    res.Append(value);
+                    flag = 1;
+                }
+                else
+                {
+                    flag = 0;
+                    res.Append(value);
+                }
+            }
+
+            if (flag != 0)
+            {
+                res.Append(flag);
+            }
+            
+            string result = "";
+            for (int i = res.Length - 1; i >= 0; i--)
+            {
+                result += res[i];
+            }
+
+            return result;
+        }
+
+        // 3、子集
+        public IList<IList<int>> Subsets(int[] nums)
+        {
+            List <IList<int>> res = new List <IList<int>>();
+            res.Add(new List<int>());
+
+            for (int i = 0; i < nums.Length; i++)
+            {
+                int size = res.Count;
+                
+                for (int j = 0; j < size; j++)
+                {
+                    IList<int> list = res[j];
+                    IList<int> temp = new List<int>(list);
+                    temp.Add(nums[i]);
+                    res.Add(temp);
+                }
+
+            }
+            return res;
+        }
+
+        // 3、只出现一次的数字  如何才能做到线性时间复杂度和常数空间复杂度呢？  ----->  位运算
+        public int SingleNumber(int[] nums)
+        {
+            // 异或位运算    任何数和 0 做异或 都为任何数本身
+            int res = 0;
+            foreach (var item in nums)
+            {
+                res ^= item;
+
+            }
+            return res;
+        }
+
+
+    }
+
+
+    /*
+        二叉树结点
+     */
+    class TreeNode
+    {
+      public int val;
+      public TreeNode left;
+      public TreeNode right;
+      public TreeNode(int val = 0, TreeNode left = null, TreeNode right = null)
+        {
+            this.val = val;
+            this.left = left;
+            this.right = right;
+        }
+
+    }
+
+        /*
+            单链表结点
+         */
+    class ListNode
+    {
+        public int val;
+        public ListNode next;
+        public ListNode(int val = 0, ListNode next = null)
+        {
+            this.val = val;
+            this.next = next;
+        }
+    }
+    
+
+    /*
+        多级双向链表结点
+     */
+    class Node
+    {
+        public int val;
+        public Node prev;
+        public Node next;
+        public Node child;
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+// See https://aka.ms/new-console-template for more information
+
+
+using leetcode;
+
+Class1 class1 = new Class1();
+
+//int res = class1.PivotIndex(new int[] { -1, -1, -1, -1, -1, -1 });
+//Console.WriteLine(res);
+
+
+
+
+//bool res = class1.ValidPalindrome("");
+//Console.WriteLine(res);
+
+
+/*int res = class1.CountSubstrings("abc");
+Console.WriteLine(res);*/
+
+
+//ListNode l1 = new ListNode(1);
+//l1.next = new ListNode(4);
+//l1.next.next = new ListNode(3);
+
+
+
+/*ListNode l2 = new ListNode(9);
+l2.next = new ListNode(9);
+//l2.next.next = new ListNode(4);
+
+
+var res = class1.AddTwoNumbers(l1, l2);
+
+while(res != null)
+{
+    Console.WriteLine(res.val);
+    res = res.next;
+}*/
+
+/*ListNode l1 = new ListNode(1);
+l1.next = new ListNode(2);
+l1.next.next = new ListNode(3);
+l1.next.next.next = new ListNode(4);
+l1.next.next.next.next = new ListNode(5);
+class1.ReorderList(l1);*/
+
+
+
+/*ListNode l1 = new ListNode(1);
+l1.next = new ListNode(2);
+l1.next.next = new ListNode(2);
+l1.next.next.next = new ListNode(1);
+Console.WriteLine(class1.IsPalindrome(l1));*/
+
+
+
+/*int res = class1.CountSubstrings("aaa");
+Console.WriteLine(res);*/
+
+
+//int res = class1.NumDecodings("226");
+//Console.WriteLine(res);
+
+
+//bool res = class1.WordBreak("leetcode", new List<string>() { "leet", "code"});
+//System.Console.WriteLine(res);
+
+
+
+string res = class1.AddBinary("1010", "1011");
+Console.WriteLine(res);
+
+
+
+
+/*var res = class1.ThreeSum(new int[] { -1,0,1,2,-1,4});
+foreach (var item in res)
+{
+    foreach(var item2 in item)
+    {
+        Console.Write(item2.ToString() + "  ");
+    }
+    Console.WriteLine();
+}
+
+Person Person1 = new Person();
+Console.WriteLine(Person1.Name);
+Person1.Age = -3;
+Console.WriteLine(Person1.Age);*/
+
+/*var res2 = class1.MinSubArrayLen(11, new int[] {1, 2, 3, 4, 5});
+Console.WriteLine(res2);*/
+
+
+/*var res = class1.NumSubarrayProductLessThanK(new int[] { 10, 5, 2, 6 }, 100);
+Console.WriteLine(res);*/
